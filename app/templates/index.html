@@ -40,7 +40,7 @@ body {
   <input name="Submit"  type="submit" value="Add Author" >
 </form>
 
-<svg width="1000" height="500" id="container"></svg>
+<svg width="800" height="800" id="container"></svg>
 <script>
 
 // get the API key
@@ -50,20 +50,17 @@ var svg = d3.select('#container'),
     w = +svg.attr("width"),
     h = +svg.attr("height");
 
-var margin = {top: 50, right: 200, bottom: 150, left: 200};
-var xAxisSpace = 60,
-    xAxisPadding = 20,
-    circleRadius = 12,
-    width = w - margin.right,
-    height = h - margin.bottom;
+var margin = {top: 50, right: 100, bottom: 150, left: 150};
+var circleRadius = 12,
+    width = w - margin.left - margin.right,
+    height = h - margin.bottom - margin.top;
 
 var focus = svg.append('g')
                .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
 
 // set the ranges for the scales. xScale will be dynamically done
-var xScale,
-    yScale = d3.scaleLinear().range([height - xAxisSpace, 0]),
-    yScale2,
+var yScale = d3.scaleBand().rangeRound([0, height]).padding(0.1),
+    xScale,
     colorScale = d3.scaleLinear().range([0,1]);
 
 // listen for radio button change
@@ -78,26 +75,20 @@ function updateOnChange() {
 }
 
 function bindXScale(type) {
+
   if (type == 'author') {
-    xScale = d3.scaleBand().rangeRound([0, width]).padding(0.1);
-    xScale.domain(all_data.map(function(d) { return d.name; }))
+    xScale = d3.scaleLinear().range([0, circleRadius * all_data.length]);
+    xScale.domain([0, d3.max(all_data.map(function(d) { return d.nyt.length }))]);
   } else {
-    xScale = d3.scaleTime().range([0,width]);
+    xScale = d3.scaleTime().range([circleRadius, width]);
     xScale.domain(d3.extent(flattenedData, function(d) { return parseTime(d.publication_dt); }))
   }
-
-  updateXAxis();
+  focus.select('.axis--x').call(d3.axisBottom(xScale));
 }
 
 function bindYScale(type) {
-  if (type == 'author') {
-    yScale2 = d3.scaleBand().rangeRound([0, width]).padding(0.1);
-    yScale2.domain(all_data.map(function(d) { return d.name; }))
-  } else {
-    yScale2 = d3.scaleTime().range([0,width]);
-    yScale2.domain(d3.extent(flattenedData, function(d) { return parseTime(d.publication_dt); }))
-  }
-  focus.select('.axis--y').call(d3.axisLeft(yScale2));
+  yScale.domain(all_data.map(function(d) { return d.name; }))
+  focus.select('.axis--y').call(d3.axisLeft(yScale));
 }
 /*******************
 MAIN FUNCTIONALITY
@@ -107,12 +98,12 @@ var all_data = {{ data | tojson}};
 var graphType = d3.select('input[name="reviews"]:checked').node().value;
 var flattenedData = removeDuplicates(flattenData(all_data));
 // set the domain
-updateYAndColorScale(all_data);
+updateColorScale(all_data);
 
 // append the x axis class
 focus.append('g')
      .attr('class', 'axis axis--x')
-     .attr('transform', 'translate(0,' + (height - xAxisSpace) +')')
+     .attr('transform', 'translate(0,' + (height) +')')
 
 focus.append('g')
      .attr('class', 'axis axis--y')
@@ -124,8 +115,7 @@ drawDataPoints(graphType, flattenedData);
 END MAIN FUNCTIONALITY
 **********************/
 
-function updateYAndColorScale(data) {
-  yScale.domain([0, d3.max(data.map(function(d) { return d.nyt.length }))]);
+function updateColorScale(data) {
   colorScale.domain([0, data.length])
 }
 
@@ -144,6 +134,7 @@ function drawDatePoints(data) {
        .transition()
        .duration(1000)
        .attr('cx', function(d) { return xScale(parseTime(d.publication_dt)); })
+       .attr('cy', function(d) { return yScale(d['book_author']) + yScale.bandwidth()/2; });
 }
 
 function drawAuthorPoints(data) {
@@ -151,10 +142,12 @@ function drawAuthorPoints(data) {
        .data(data, function(d) { return d.url;})
        .transition()
        .duration(1000)
-       .attr('cx', function(d) { return (xScale(d['book_author']) + xScale.bandwidth()/2); })
-       .attr('cy', function(d) {
+       .attr('cx', function(d) {
          // offset for indexing by zero-- none of these are 'zero' reviews
-         return yScale(d['review_num'] + 1);
+         return xScale(d['review_num'] + 1);
+       })
+       .attr('cy', function(d) {
+         return (yScale(d['book_author']) + yScale.bandwidth()/2);
        })
 }
 
@@ -267,19 +260,6 @@ function removeDuplicates(data) {
   return noDuplicates;
 }
 
-function updateXAxis(type) {
-  focus.select('.axis--x').call(d3.axisBottom(xScale));
-
-  focus.selectAll('.axis--x')
-       .selectAll('text')
-       .style('text-anchor', 'end')
-       .attr('dx', '-.8em')
-       .attr('dy', '.15em')
-       .attr('transform', 'rotate(-65)');
-}
-
-
-
 function nytAPICall(name, api_key) {
   var url = 'https://api.nytimes.com/svc/books/v3/reviews.json';
   url += '?' + $.param({
@@ -293,8 +273,9 @@ function nytAPICall(name, api_key) {
     var newEntry = {'name': toTitleCase(name), 'nyt': result.results};
     all_data.push(newEntry);
     all_data = alphabetize(all_data);
-    updateYAndColorScale(all_data);
+    updateColorScale(all_data);
     flattenedData = removeDuplicates(flattenData(all_data));
+    bindYScale(graphType);
     bindXScale(graphType);
     drawPoints(flattenedData);
     drawDataPoints(graphType, flattenedData);
