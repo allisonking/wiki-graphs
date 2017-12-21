@@ -50,7 +50,7 @@ var svg = d3.select('#container'),
     w = +svg.attr("width"),
     h = +svg.attr("height");
 
-var margin = {top: 50, right: 200, bottom: 150, left: 100};
+var margin = {top: 50, right: 200, bottom: 150, left: 200};
 var xAxisSpace = 60,
     xAxisPadding = 20,
     circleRadius = 12,
@@ -63,6 +63,7 @@ var focus = svg.append('g')
 // set the ranges for the scales. xScale will be dynamically done
 var xScale,
     yScale = d3.scaleLinear().range([height - xAxisSpace, 0]),
+    yScale2,
     colorScale = d3.scaleLinear().range([0,1]);
 
 // listen for radio button change
@@ -87,6 +88,17 @@ function bindXScale(type) {
 
   updateXAxis();
 }
+
+function bindYScale(type) {
+  if (type == 'author') {
+    yScale2 = d3.scaleBand().rangeRound([0, width]).padding(0.1);
+    yScale2.domain(all_data.map(function(d) { return d.name; }))
+  } else {
+    yScale2 = d3.scaleTime().range([0,width]);
+    yScale2.domain(d3.extent(flattenedData, function(d) { return parseTime(d.publication_dt); }))
+  }
+  focus.select('.axis--y').call(d3.axisLeft(yScale2));
+}
 /*******************
 MAIN FUNCTIONALITY
 *******************/
@@ -102,7 +114,11 @@ focus.append('g')
      .attr('class', 'axis axis--x')
      .attr('transform', 'translate(0,' + (height - xAxisSpace) +')')
 
+focus.append('g')
+     .attr('class', 'axis axis--y')
+
 bindXScale(graphType);
+bindYScale(graphType);
 drawDataPoints(graphType, flattenedData);
 /**********************
 END MAIN FUNCTIONALITY
@@ -261,6 +277,8 @@ function updateXAxis(type) {
        .attr('dy', '.15em')
        .attr('transform', 'rotate(-65)');
 }
+
+
 
 function nytAPICall(name, api_key) {
   var url = 'https://api.nytimes.com/svc/books/v3/reviews.json';
