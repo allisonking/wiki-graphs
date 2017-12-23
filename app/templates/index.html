@@ -122,26 +122,12 @@ focus.append('g')
 focus.append('g')
      .attr('class', 'axis axis--y')
 
-// write the list of authors
-//renderAuthorList();
-
 // prepare the data and draw the graph
 prepareData();
 updateGraph();
 /**********************
 END MAIN FUNCTIONALITY
 **********************/
-
-function renderAuthorList() {
-  var div = d3.select('#authorList');
-  var list = div.append('ul');
-  var nameDiv = list.selectAll('li')
-                    .data(all_data, function(d) { return d.name; })
-                    .enter()
-                    .append('li')
-                    .text(function(d) { return d.name; })
-
-}
 
 function prepareData() {
   all_data = alphabetize(all_data);
