@@ -1,0 +1,29 @@
+.label-background {
+  fill: white;
+  fill-opacity: .5;
+}
+
+.axis {
+  font-family: Helvetica, sans-serif;
+  font-size: 14px;
+}
+
+.book-title {
+  font-weight: bold;
+}
+
+.right {
+  position: absolute;
+  left: 750px;
+  top: 150px;
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  font-family: Helvetica;
+}
