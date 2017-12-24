@@ -182,6 +182,7 @@ function drawPoints(data) {
         .append('a')
         .attr('xlink:target', '_blank')
         .attr('xlink:href', function(d) { return d.url; })
+        .attr('class', 'point')
         .append('circle')
         .attr('class', 'data-point')
         .attr('fill', function(d) {

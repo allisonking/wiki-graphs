@@ -12,6 +12,10 @@
   font-weight: bold;
 }
 
+.point {
+  cursor: pointer;
+}
+
 .right {
   position: absolute;
   left: 750px;
