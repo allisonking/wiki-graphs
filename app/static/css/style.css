@@ -18,6 +18,10 @@
   top: 150px;
 }
 
+.axis--y .tick {
+  cursor: not-allowed;
+}
+
 ul {
   list-style-type: none;
   padding: 0;

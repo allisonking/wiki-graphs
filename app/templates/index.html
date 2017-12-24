@@ -28,7 +28,7 @@
 <svg width="800" height="800" id="container"></svg>
 <script>
 
-// get the API key
+// get the API key from flask
 var nyt_api = {{ nyt_api_key | tojson}};
 
 var svg = d3.select('#container'),
@@ -73,6 +73,16 @@ function bindXScale(type) {
 function bindYScale() {
   yScale.domain(all_data.map(function(d) { return d.name; }))
   focus.select('.axis--y').call(d3.axisLeft(yScale));
+  focus.selectAll('.axis--y .tick').on('click', deleteAuthor);
+}
+
+function deleteAuthor(d) {
+  var index = getIndexFromName(d, all_data);
+  if (index > -1) {
+    var removed = all_data.splice(index, 1);
+  }
+  prepareData();
+  updateGraph();
 }
 /*******************
 MAIN FUNCTIONALITY
@@ -142,20 +152,25 @@ function drawAuthorPoints(data) {
 }
 
 function drawPoints(data) {
-  focus.selectAll('a')
-          .data(data, function(d) { return d.url;})
-          .enter()
-          .append('a')
-          .attr('xlink:target', '_blank')
-          .attr('xlink:href', function(d) { return d.url; })
-          .append('circle')
-          .attr('class', 'data-point')
-          .attr('fill', function(d) {
-            return d3.interpolateSpectral(colorScale(d['author_num']));
-          })
-          .attr('r', circleRadius)
-          .on('mouseover', handleMouseOver)
-          .on('mouseout', handleMouseOut);
+  var points = focus.selectAll('a')
+                    .data(data, function(d) { return d.url;})
+  points.enter()
+        .append('a')
+        .attr('xlink:target', '_blank')
+        .attr('xlink:href', function(d) { return d.url; })
+        .append('circle')
+        .attr('class', 'data-point')
+        .attr('fill', function(d) {
+          return d3.interpolateSpectral(colorScale(d['author_num']));
+        })
+        .attr('r', circleRadius)
+        .on('mouseover', handleMouseOver)
+        .on('mouseout', handleMouseOut);
+
+  // this line makes the circle fade out
+  points.exit().selectAll('circle').transition().attr('fill', 'white');
+  // this line removes the <a> tag wrapping
+  points.exit().transition().remove();
 }
 
 function handleMouseOver(d, i) {

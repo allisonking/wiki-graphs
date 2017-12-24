@@ -48,3 +48,8 @@ function flattenData(data) {
   });
   return flattenedArray;
 }
+
+function getIndexFromName(name, array) {
+  var index = array.map(function(x) { return x.name; }).indexOf(name);
+  return index;
+}
