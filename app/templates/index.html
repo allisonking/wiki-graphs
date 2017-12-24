@@ -6,63 +6,46 @@
   <script src="https://code.jquery.com/jquery-3.2.1.min.js"
   integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
   crossorigin="anonymous"></script>
+  <script src="{{ url_for('static', filename='javascript/util.js')}}"> </script>
+  <link rel="stylesheet" type='text/css' href="{{ url_for('static', filename='css/style.css')}}">
 </head>
-<style>
-
-.label-background {
-  fill: white;
-  fill-opacity: .5;
-}
-
-.axis {
-  font-family: Helvetica, sans-serif;
-  font-size: 14px;
-}
-
-.book-title {
-  font-weight: bold;
-}
-
-body {
-  font-family: Helvetica;
-}
-
-</style>
 
 <body>
 <h3>Asian American Literature</h3>
-<form >
+
+<div class="right">
+<form>
   <input type='radio' name='reviews' value='author' checked> By Author <br>
   <input type='radio' name='reviews' value='date'> By Date <br><br>
 </form>
 <form name="myform" onSubmit="return handleSubmission()">
-  <input type="text" id="inputName" placeholder="Add an author's name (first and last)">
+  <input type="text" id="inputName" placeholder="Add an author's name (first and last)"> <br>
   <input name="Submit"  type="submit" value="Add Author" >
-</form>
+</form> <br>
+<div id="authorList"></div>
+</div>
 
-<svg width="1000" height="500" id="container"></svg>
+<svg width="800" height="800" id="container"></svg>
 <script>
 
-// get the API key
+// get the API key from flask
 var nyt_api = {{ nyt_api_key | tojson}};
 
 var svg = d3.select('#container'),
     w = +svg.attr("width"),
     h = +svg.attr("height");
 
-var margin = {top: 50, right: 200, bottom: 150, left: 100};
-var xAxisSpace = 60,
-    xAxisPadding = 20,
-    circleRadius = 12,
-    width = w - margin.right,
-    height = h - margin.bottom;
+var margin = {top: 50, right: 100, bottom: 150, left: 150};
+var circleRadius = 12,
+    width = w - margin.left - margin.right,
+    height = h - margin.bottom - margin.top;
 
 var focus = svg.append('g')
                .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
 
 // set the ranges for the scales. xScale will be dynamically done
-var xScale,
-    yScale = d3.scaleLinear().range([height - xAxisSpace, 0]),
+var yScale = d3.scaleBand().rangeRound([0, height]).padding(0.1),
+    xScale,
     colorScale = d3.scaleLinear().range([0,1]);
 
 // listen for radio button change
@@ -78,39 +61,62 @@ function updateOnChange() {
 
 function bindXScale(type) {
   if (type == 'author') {
-    xScale = d3.scaleBand().rangeRound([0, width]).padding(0.1);
-    xScale.domain(all_data.map(function(d) { return d.name; }))
+    xScale = d3.scaleLinear().range([0, circleRadius * all_data.length * 1.2]);
+    xScale.domain([0, d3.max(all_data.map(function(d) { return d.nyt.length }))]);
   } else {
-    xScale = d3.scaleTime().range([0,width]);
+    xScale = d3.scaleTime().range([circleRadius*2, width]);
     xScale.domain(d3.extent(flattenedData, function(d) { return parseTime(d.publication_dt); }))
   }
+  focus.select('.axis--x').call(d3.axisBottom(xScale));
+}
 
-  updateXAxis();
+function bindYScale() {
+  yScale.domain(all_data.map(function(d) { return d.name; }))
+  focus.select('.axis--y').call(d3.axisLeft(yScale));
+  focus.selectAll('.axis--y .tick').on('click', deleteAuthor);
+}
+
+function deleteAuthor(d) {
+  var index = getIndexFromName(d, all_data);
+  if (index > -1) {
+    var removed = all_data.splice(index, 1);
+  }
+  prepareData();
+  updateGraph();
 }
 /*******************
 MAIN FUNCTIONALITY
 *******************/
+// get the graph type from the radio buttons
+var graphType = d3.select('input[name="reviews"]:checked').node().value;
 // grab the data from flask
 var all_data = {{ data | tojson}};
-var graphType = d3.select('input[name="reviews"]:checked').node().value;
-var flattenedData = removeDuplicates(flattenData(all_data));
-// set the domain
-updateYAndColorScale(all_data);
+var flattenedData;
 
-// append the x axis class
+// create the x and y axis
 focus.append('g')
      .attr('class', 'axis axis--x')
-     .attr('transform', 'translate(0,' + (height - xAxisSpace) +')')
+     .attr('transform', 'translate(0,' + (height) +')')
+focus.append('g')
+     .attr('class', 'axis axis--y')
 
-bindXScale(graphType);
-drawDataPoints(graphType, flattenedData);
+// prepare the data and draw the graph
+prepareData();
+updateGraph();
 /**********************
 END MAIN FUNCTIONALITY
 **********************/
 
-function updateYAndColorScale(data) {
-  yScale.domain([0, d3.max(data.map(function(d) { return d.nyt.length }))]);
-  colorScale.domain([0, data.length])
+function prepareData() {
+  all_data = alphabetize(all_data);
+  flattenedData = removeDuplicates(flattenData(all_data));
+}
+
+function updateGraph() {
+  colorScale.domain([0, all_data.length]);
+  bindYScale();
+  bindXScale(graphType);
+  drawDataPoints(graphType, flattenedData);
 }
 
 function drawDataPoints(type, data) {
@@ -128,6 +134,7 @@ function drawDatePoints(data) {
        .transition()
        .duration(1000)
        .attr('cx', function(d) { return xScale(parseTime(d.publication_dt)); })
+       .attr('cy', function(d) { return yScale(d['book_author']) + yScale.bandwidth()/2; });
 }
 
 function drawAuthorPoints(data) {
@@ -135,28 +142,35 @@ function drawAuthorPoints(data) {
        .data(data, function(d) { return d.url;})
        .transition()
        .duration(1000)
-       .attr('cx', function(d) { return (xScale(d['book_author']) + xScale.bandwidth()/2); })
-       .attr('cy', function(d) {
+       .attr('cx', function(d) {
          // offset for indexing by zero-- none of these are 'zero' reviews
-         return yScale(d['review_num'] + 1);
+         return xScale(d['review_num'] + 1);
+       })
+       .attr('cy', function(d) {
+         return (yScale(d['book_author']) + yScale.bandwidth()/2);
        })
 }
 
 function drawPoints(data) {
-  focus.selectAll('a')
-          .data(data, function(d) { return d.url;})
-          .enter()
-          .append('a')
-          .attr('xlink:target', '_blank')
-          .attr('xlink:href', function(d) { return d.url; })
-          .append('circle')
-          .attr('class', 'data-point')
-          .attr('fill', function(d) {
-            return d3.interpolateSpectral(colorScale(d['author_num']));
-          })
-          .attr('r', circleRadius)
-          .on('mouseover', handleMouseOver)
-          .on('mouseout', handleMouseOut);
+  var points = focus.selectAll('a')
+                    .data(data, function(d) { return d.url;})
+  points.enter()
+        .append('a')
+        .attr('xlink:target', '_blank')
+        .attr('xlink:href', function(d) { return d.url; })
+        .append('circle')
+        .attr('class', 'data-point')
+        .attr('fill', function(d) {
+          return d3.interpolateSpectral(colorScale(d['author_num']));
+        })
+        .attr('r', circleRadius)
+        .on('mouseover', handleMouseOver)
+        .on('mouseout', handleMouseOut);
+
+  // this line makes the circle fade out
+  points.exit().selectAll('circle').transition().attr('fill', 'white');
+  // this line removes the <a> tag wrapping
+  points.exit().transition().remove();
 }
 
 function handleMouseOver(d, i) {
@@ -215,53 +229,6 @@ function handleSubmission(d) {
   return false;
 }
 
-function flattenData(data) {
-  var flattenedArray = [];
-  data.forEach(function(datum, authorNum) {
-    datum.nyt.forEach(function(d, reviewNum) {
-      d['author_num'] = authorNum;
-      d['review_num'] = reviewNum;
-      flattenedArray.push(d);
-    });
-  });
-  return flattenedArray;
-}
-
-function removeDuplicates(data) {
-  var dict = {};
-  var noDuplicates = [];
-  // duplicates seem to occur when both http and https are available as URLs
-  for (var i = 0; i < data.length; i++) {
-    var urlSansProtocol = data[i].url.substring(data[i].url.indexOf("://") + 1);
-    if (dict[urlSansProtocol] == undefined) {
-      dict[urlSansProtocol] = data[i];
-    } else {
-      // prioritize https
-      if (data[i].url.indexOf("https://") != -1) {
-        var storedReview = dict[urlSansProtocol];
-        dict[urlSansProtocol] = data[i];
-        // have to keep review number consistent
-        dict[urlSansProtocol]['review_num'] = storedReview['review_num'];
-      }
-    }
-  }
-  for (var key in dict) {
-    noDuplicates.push(dict[key]);
-  }
-  return noDuplicates;
-}
-
-function updateXAxis(type) {
-  focus.select('.axis--x').call(d3.axisBottom(xScale));
-
-  focus.selectAll('.axis--x')
-       .selectAll('text')
-       .style('text-anchor', 'end')
-       .attr('dx', '-.8em')
-       .attr('dy', '.15em')
-       .attr('transform', 'rotate(-65)');
-}
-
 function nytAPICall(name, api_key) {
   var url = 'https://api.nytimes.com/svc/books/v3/reviews.json';
   url += '?' + $.param({
@@ -274,34 +241,13 @@ function nytAPICall(name, api_key) {
   }).done(function(result) {
     var newEntry = {'name': toTitleCase(name), 'nyt': result.results};
     all_data.push(newEntry);
-    all_data = alphabetize(all_data);
-    updateYAndColorScale(all_data);
-    flattenedData = removeDuplicates(flattenData(all_data));
-    bindXScale(graphType);
-    drawPoints(flattenedData);
-    drawDataPoints(graphType, flattenedData);
+    prepareData();
+    updateGraph();
     return result;
   }).fail(function(err) {
     throw err;
   });
 }
-
-function alphabetize(data) {
-  data.sort(function(a, b) {
-    var splitA = a.name.split(" ");
-    var splitB = b.name.split(" ");
-    if(splitA[splitA.length-1] < splitB[splitB.length-1]) return -1;
-    if(splitA[splitA.length-1] > splitB[splitB.length-1]) return 1;
-    return 0;
-  })
-  return data;
-}
-
-function toTitleCase(str)
-{
-    return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
-}
-
 
 </script>
 </body>
