@@ -19,7 +19,7 @@
 }
 
 .axis--y .tick {
-  cursor: not-allowed;
+  cursor: pointer;
 }
 
 ul {
