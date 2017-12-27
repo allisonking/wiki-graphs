@@ -12,6 +12,10 @@
   font-weight: bold;
 }
 
+.point {
+  cursor: pointer;
+}
+
 .right {
   position: absolute;
   left: 750px;
@@ -19,7 +23,7 @@
 }
 
 .axis--y .tick {
-  cursor: not-allowed;
+  cursor: pointer;
 }
 
 ul {
