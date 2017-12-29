@@ -1,8 +1,9 @@
 import os, json
-from flask import render_template, g
+from flask import render_template, g, flash, redirect, url_for, request
 from app import wikigraph
 from pymongo import MongoClient
-from bson.json_util import dumps
+from bson.json_util import dumps, loads
+from datetime import datetime
 
 # read configuration file
 wikigraph.config.from_pyfile('config_file.cfg')
@@ -21,8 +22,20 @@ def get_connection():
 
 def get_authors():
     db = get_db()
-    cursor = db.asian_american.find({})
+    cursor = db.asian_american.find().sort([('created_at', -1)]).limit(1)
     return dumps(cursor)
+
+@wikigraph.route('/add', methods=['POST'])
+def add_entry():
+    db = get_db()
+    payload = request.data
+    data_in_one = {
+    "created_at": datetime.now(),
+    "data" : loads(payload)
+    }
+    db.asian_american.insert(data_in_one)
+    flash('New entry was successfully posted')
+    return redirect(url_for('index'))
 
 @wikigraph.teardown_appcontext
 def close_db(error):
@@ -34,8 +47,5 @@ def close_db(error):
 @wikigraph.route('/')
 @wikigraph.route('/index')
 def index():
-    #filename = os.path.join(wikigraph.static_folder, 'author_data.json')
-    #with open(filename) as data_file:
-    #    data = json.load(data_file)
-    data = json.loads(get_authors())
+    data = json.loads(get_authors())[0]['data']
     return render_template("index.html", data=data, nyt_api_key=wikigraph.config['NYT_API_KEY'])
