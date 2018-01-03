@@ -48,4 +48,7 @@ def close_db(error):
 @wikigraph.route('/index')
 def index():
     data = json.loads(get_authors())[0]['data']
-    return render_template("index.html", data=data, nyt_api_key=wikigraph.config['NYT_API_KEY'])
+    return render_template("index.html",
+data=data,
+data_subject="Asian American Literature",
+nyt_api_key=wikigraph.config['NYT_API_KEY'],)
