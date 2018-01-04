@@ -40,7 +40,13 @@ NYT_API_KEY='your key here'
 
 In a virtual environment:
 ```
+# install the requirements
 pip install -r requirements.txt
+
+# seed the database
+python app/db/seeds.py
+
+# run flask
 export FLASK_APP=wikigraph.py
 flask run
 ```
