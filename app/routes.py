@@ -7,6 +7,9 @@ from datetime import datetime
 
 # read configuration file
 wikigraph.config.from_pyfile('config_file.cfg')
+MONGO_URL = os.environ.get('MONGO_URL')
+if not MONGO_URL:
+    MONGO_URL = 'localhost:27017'
 
 def get_db():
     """Opens a new database connection if there is none yet for the current app context"""
@@ -17,7 +20,7 @@ def get_db():
 
 def get_connection():
     if not hasattr(g, 'client'):
-        g.client = MongoClient('localhost:27017')
+        g.client = MongoClient(MONGO_URL)
     return g.client
 
 def get_authors():
@@ -48,4 +51,7 @@ def close_db(error):
 @wikigraph.route('/index')
 def index():
     data = json.loads(get_authors())[0]['data']
-    return render_template("index.html", data=data, nyt_api_key=wikigraph.config['NYT_API_KEY'])
+    return render_template("index.html",
+data=data,
+data_subject="Asian American Literature",
+nyt_api_key=wikigraph.config['NYT_API_KEY'],)

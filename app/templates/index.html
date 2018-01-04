@@ -1,30 +1,6 @@
-<!DOCTYPE html>
-<meta charset="utf-8">
-<head>
-  <script src="https://d3js.org/d3.v4.min.js"></script>
-  <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
-  <script src="https://code.jquery.com/jquery-3.2.1.min.js"
-  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
-  crossorigin="anonymous"></script>
-  <script src="{{ url_for('static', filename='javascript/util.js')}}"> </script>
-  <link rel="stylesheet" type='text/css' href="{{ url_for('static', filename='css/style.css')}}">
-</head>
+{% extends "base.html" %}
 
-<body>
-<h3>Asian American Literature</h3>
-
-<div class="right">
-<form>
-  <input type='radio' name='reviews' value='author' checked> By Author <br>
-  <input type='radio' name='reviews' value='date'> By Date <br><br>
-</form>
-<form name="myform" onSubmit="return handleSubmission()">
-  <input type="text" id="inputName" name="authorName" placeholder="Add an author's name (first and last)"> <br>
-  <input name="Submit"  type="submit" value="Add Author" >
-</form> <br>
-<button onClick="save()">Save Changes</button>
-<div id="authorList"></div>
-</div>
+{% block content %}
 
 <svg width="800" height="800" id="container"></svg>
 <script>
@@ -36,7 +12,7 @@ var svg = d3.select('#container'),
     w = +svg.attr("width"),
     h = +svg.attr("height");
 
-var margin = {top: 50, right: 100, bottom: 150, left: 170};
+var margin = {top: 25, right: 100, bottom: 50, left: 170};
 var circleRadius = 12,
     width = w - margin.left - margin.right,
     height = h - margin.bottom - margin.top;
@@ -290,4 +266,4 @@ function nytAPICall(name, api_key) {
 }
 
 </script>
-</body>
+{% endblock %}
