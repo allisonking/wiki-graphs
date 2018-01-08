@@ -12,7 +12,7 @@ So far the pipeline looks like this:
 
 ![data pipeline](readme-imgs/pipeline_1.png)
 
-This is nice if we know we already have the list of all Asian American authors. But since this was a list I put together alone, it is certainly not complete. And since there isn't a definitive list of Asian American authors out there, the best way to create a comprehensive list seems to be to go the Wikipedia route.
+This is nice if we know we already have the list of all Asian American authors. But since this was a list I put together alone, it is certainly not complete. And since there isn't a definitive list of Asian American authors out there, the best way to create a comprehensive list seems to be to go the Wikipedia route, where a community reaches a consensus through continuous, collaborative editing.
 
 Hence, wikigraphs!
 
@@ -23,7 +23,7 @@ In this model, a user can add and delete the data driver (the author name). The 
 
 Changes made are saved to a database, and therefore the graph represents a collective idea about the topic (in this case, who is an Asian American author).
 
-### Tech
+## Tech
 * Flask
 * MongoDB
 * D3.js
@@ -50,3 +50,8 @@ python app/db/seeds.py
 export FLASK_APP=wikigraph.py
 flask run
 ```
+
+## Improvements
+* Show log of changes-- which authors have been added and deleted in the past
+* Ability to add separate graphs for other topics-- e.g. African American, Science Fiction, Fantasy...
+* Incorporate other data sources-- GoodReads API?
