@@ -1,1 +1,1 @@
-from app import wikigraph
+from app import wikigraph as application
