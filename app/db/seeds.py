@@ -4,7 +4,7 @@ import json, os
 
 client = MongoClient(os.environ.get('MONGODB_URI'))
 db = client.wikigraph
-db.drop_collection('asian_american')
+#db.drop_collection('asian_american')
 
 filename = "app/static/author_data.json"
 with open(filename) as data_file:
