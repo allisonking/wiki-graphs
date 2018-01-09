@@ -1,1 +1,1 @@
-web: gunicorn wikigraph:app --log-file -
+web: gunicorn wikigraph --log-file -
