@@ -1,12 +1,12 @@
 from pymongo import MongoClient
 from datetime import datetime
-import json
+import json, os
 
-client = MongoClient('localhost:27017')
+client = MongoClient(os.environ.get('MONGODB_URI'))
 db = client.wikigraph
 db.drop_collection('asian_american')
 
-filename = "static/author_data.json"
+filename = "app/static/author_data.json"
 with open(filename) as data_file:
     data = json.load(data_file)
 
