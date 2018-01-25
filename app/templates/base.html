@@ -8,9 +8,11 @@
   crossorigin="anonymous"></script>
   <script src="{{ url_for('static', filename='javascript/util.js')}}"> </script>
   <link rel="stylesheet" type='text/css' href="{{ url_for('static', filename='css/style.css')}}">
+  <link rel="stylesheet" type='text/css' href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
   <title>Wikigraph</title>
 </head>
 <body>
+  <div class="content">
   <h3> {{data_subject}} </h3>
   <div class="right">
   <form>
@@ -19,13 +21,14 @@
   </form>
   <form name="myform" onSubmit="return handleSubmission()">
     <input type="text" id="inputName" name="authorName" placeholder="Add an author's name (first and last)"> <br>
-    <input name="Submit"  type="submit" value="Add Author" >
+    <input name="Submit"  type="submit" value="Add Author" class="btn btn-info btn-sm">
   </form> <br>
-  <button onClick="save()">Save Changes</button>
-  <div id="authorList"></div>
+  <button class="btn btn-info" id="save-button" onClick="save()" disabled>Save Changes</button>
+  <div class="save-message"></div>
   </div>
   {% block content %} {% endblock %}
   <a href="http://developer.nytimes.com">
   <img src="{{ url_for('static', filename='images/poweredby_nytimes_200b.png')}}"> </img>
 </a>
+</div>
 </body>

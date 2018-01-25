@@ -40,7 +40,13 @@ function save() {
     data: JSON.stringify(all_data),
     contentType: "application/json; charset=utf-8"
   }).done(function(result) {
-    console.log("saved");
+    disableSave();
+    d3.select(".save-message")
+      .text("saved!");
+    setTimeout(function() {
+      d3.select(".save-message")
+        .text("");
+    }, 3000)
   }).fail(function(err) {
     throw err;
   });
@@ -78,6 +84,7 @@ function deleteAuthor(d) {
     var removed = all_data.splice(index, 1);
     prepareData();
     updateGraph();
+    enableSave();
   }
 }
 /*******************
@@ -245,6 +252,14 @@ function handleSubmission(d) {
   return false;
 }
 
+function enableSave() {
+  d3.select('#save-button').attr('disabled', null);
+}
+
+function disableSave() {
+  d3.select('#save-button').attr('disabled', true);
+}
+
 function nytAPICall(name, api_key) {
   var url = 'https://api.nytimes.com/svc/books/v3/reviews.json';
   url += '?' + $.param({
@@ -259,6 +274,7 @@ function nytAPICall(name, api_key) {
     all_data.push(newEntry);
     prepareData();
     updateGraph();
+    enableSave();
     return result;
   }).fail(function(err) {
     throw err;
