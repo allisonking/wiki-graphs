@@ -5,12 +5,6 @@ from pymongo import MongoClient
 from bson.json_util import dumps, loads
 from datetime import datetime
 
-# read configuration file
-# wikigraph.config.from_pyfile('config_file.cfg')
-# MONGO_URL = os.environ.get('MONGO_URL')
-# if not MONGO_URL:
-#     MONGO_URL = 'localhost:27017'
-
 def get_db():
     """Opens a new database connection if there is none yet for the current app context"""
     if not hasattr(g, 'db'):
@@ -20,7 +14,7 @@ def get_db():
 
 def get_connection():
     if not hasattr(g, 'client'):
-        g.client = MongoClient(os.environ.get('MONGODB_URI'))
+        g.client = MongoClient(wikigraph.config['MONGODB_URI'])
     return g.client
 
 def get_authors():
@@ -37,7 +31,6 @@ def add_entry():
     "data" : loads(payload)
     }
     db.asian_american.insert(data_in_one)
-    flash('New entry was successfully posted')
     return redirect(url_for('index'))
 
 @wikigraph.teardown_appcontext
@@ -54,4 +47,4 @@ def index():
     return render_template("index.html",
 data=data,
 data_subject="Asian American Literature",
-nyt_api_key=os.environ.get('NYT_API_KEY'))
+nyt_api_key=wikigraph.config['NYT_API_KEY'])
