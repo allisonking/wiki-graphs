@@ -2,7 +2,6 @@ from pymongo import MongoClient
 from datetime import datetime
 import json, os
 
-print(os.environ.get('MONGODB_URI'));
 client = MongoClient(os.environ.get('MONGODB_URI'))
 db = client.wikigraph
 db.drop_collection('asian_american')
