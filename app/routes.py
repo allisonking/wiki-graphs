@@ -28,7 +28,7 @@ def add_entry():
     payload = request.data
     data_in_one = {
     "created_at": datetime.now(),
-    "data" : loads(payload)
+    "data" : loads(payload.decode('utf-8'))
     }
     db.asian_american.insert(data_in_one)
     return redirect(url_for('index'))
